@@ -6,10 +6,10 @@
 * C (Module Programming)
 ### Target Board
 * 4x ARM Cortex-A9
-* Linux Kernel Version: 3.0.35
-> 2020-05-26
+* Linux Kernel Version: 3.0.35   
+> <span style="color:orange">2020-05-26</span>
 * 개발 계획서 작성
-> 2020-06-04
+> <span style="color:orange">2020-06-04</span>
 * Target보드에 opencv 포팅 완료 및 크로스 컴파일 확인
 * Target보드 카메라 세팅 필요
 * Raspberry Pi 와 Target 보드 소켓 통신 프로그래밍 준비
