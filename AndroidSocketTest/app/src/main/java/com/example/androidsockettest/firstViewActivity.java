@@ -17,7 +17,10 @@ public class firstViewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_first_view);
 
         ActionBar actionBar = getSupportActionBar();
-        actionBar.hide();
+        assert actionBar != null;
+        actionBar.setTitle("석상우, 이정욱");
+
+//        actionBar.hide();
 
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
