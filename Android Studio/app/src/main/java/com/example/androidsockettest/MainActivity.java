@@ -5,12 +5,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.NetworkOnMainThreadException;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
@@ -49,6 +52,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setTitle("주차 관리 시스템");
+
         view1 = (TextView) findViewById(R.id.view1);
         view2 = (TextView) findViewById(R.id.view2);
         view3 = (TextView) findViewById(R.id.view3);
@@ -68,6 +75,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         parkingCheckButton.setOnClickListener(this);
         payCheckButton.setOnClickListener(this);
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu){
+        getMenuInflater().inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+        switch(item.getItemId()){
+            case R.id.action_btn1:
+                return true;
+            case R.id.action_btn2:
+                return true;
+            case R.id.action_btn3:
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override

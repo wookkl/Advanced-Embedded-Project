@@ -21,3 +21,12 @@
 * 안드로이드 스튜디오 및 RPi 기본 구조 업로드
 * FPGA 모듈 추가
 * RPi -> Target Board 이미지 소켓 전송 필요
+
+## IP
+- WIFI : wookkl
+- Raspberry pi(Server) : 172.20.10.2
+- Achro-I.MX6Q(Client_Target) : 172.20.10.5
+- Android Studio(Client_Phone)
+##Routing Table
+- Default Gateway : 172.20.10.1
+- Server와 Client_Target은 같은 Network에서 같은 Default Gateway를 설정하여 통신.
