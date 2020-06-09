@@ -1,4 +1,4 @@
-package com.example.androidsockettest;
+package com.example.client_phone;
 
 import org.junit.Test;
 

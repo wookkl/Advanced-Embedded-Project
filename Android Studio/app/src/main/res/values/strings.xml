@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AndroidSocketTest</string>
+    <string name="app_name">Client_Phone</string>
     <string name="sendButton">송신</string>
 
     <string name="menu1">📱라즈베리 접속</string>

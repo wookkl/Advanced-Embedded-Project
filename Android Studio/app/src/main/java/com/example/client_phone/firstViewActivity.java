@@ -1,4 +1,5 @@
-package com.example.androidsockettest;
+package com.example.client_phone;
+
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;

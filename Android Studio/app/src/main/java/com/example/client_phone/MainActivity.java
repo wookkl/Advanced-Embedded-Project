@@ -1,4 +1,5 @@
-package com.example.androidsockettest;
+package com.example.client_phone;
+
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;

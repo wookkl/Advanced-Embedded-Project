@@ -1,4 +1,4 @@
-package com.example.androidsockettest;
+package com.example.client_phone;
 
 import android.content.Context;
 
@@ -22,6 +22,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.example.androidsockettest", appContext.getPackageName());
+        assertEquals("com.example.client_phone", appContext.getPackageName());
     }
 }
