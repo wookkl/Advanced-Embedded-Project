@@ -6,6 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.NetworkOnMainThreadException;
+import android.speech.tts.TextToSpeech;
+import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,10 +21,17 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
+
+import static android.speech.tts.TextToSpeech.ERROR;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -31,6 +41,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Socket client_Socket;
     private BufferedReader inputStream;
     private PrintWriter outputStream;
+
+    //TTS---------------
+    private TextToSpeech tts;
+    //------------------
 
     TextView view1;
     TextView view2;
@@ -47,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button socketConnectButton;
     Button parkingCheckButton;
     Button payCheckButton;
+
+    ArrayList<String> carInfoList = new ArrayList<String>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +91,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         socketConnectButton.setOnClickListener(this);
         parkingCheckButton.setOnClickListener(this);
         payCheckButton.setOnClickListener(this);
+        carInfoList.add("1111A");
+        carInfoList.add("2222B");
+        carInfoList.add("3333C");
+
+        //tts-------------------
+        tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != ERROR){
+                    tts.setLanguage(Locale.KOREAN);
+                }
+            }
+        });
 
     }
 
@@ -88,9 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.action_btn1:
-                return true;
             case R.id.action_btn2:
-                return true;
             case R.id.action_btn3:
                 return true;
             default:
@@ -98,14 +125,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onClick(View v) {
         switch(v.getId()){
             case R.id.send:
                 String ip = ipWriteText.getText().toString();
+                connectInfo.setText(ip);
+//                long now = System.currentTimeMillis();
+//                Date mDate = new Date(now);
+//                @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("hh:mm:ss");
+//                String getTime = simpleDate.format(mDate);
+//                connectInfo.setText(getTime);
                 connect(ip);
                 break;
             case R.id.sendCarNum1:
+
+                boolean carCheckFlag = false;
+                int index = 0;
+                String carNum = parkingCheckCarNum.getText().toString();
+
+                if(carInfoList != null){
+                    for(int i = 0 ; i < carInfoList.size(); i++){
+                        String storedCarNUm = carInfoList.get(i).substring(0,4);
+                        if(carNum.equals(storedCarNUm)){
+                            carCheckFlag = true;
+                            index = i;
+                        }
+                    }
+                }
+
+                if(carCheckFlag){
+                    //TTS
+                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carInfoList.get(index).substring(4));
+                    if(carNum.substring(3).equals("2") || carNum.substring(3).equals("4") || carNum.substring(3).equals("5") || carNum.substring(3).equals("9"))
+                        tts.speak("차량번호 " + carNum + ". 는." + carInfoList.get(index).substring(4) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                    else
+                        tts.speak("차량번호 " + carNum + ". 은." + carInfoList.get(index).substring(4) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                }
+                else{
+                    //TTS
+                    checkInfo.setText("조회되지 않는 차량입니다");
+                    tts.speak("조회되지 않는 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                }
+
                 break;
             case R.id.carNumWrite2:
                 break;
@@ -131,6 +194,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        if(tts != null) {
+
+            tts.stop();
+            tts.shutdown();
         }
     }
 

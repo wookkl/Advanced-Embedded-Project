@@ -21,32 +21,32 @@
 
     <TextView
         android:id="@+id/checkInfo"
-        android:layout_width="357dp"
-        android:layout_height="80dp"
+        android:layout_width="316dp"
+        android:layout_height="69dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.296"
+        app:layout_constraintHorizontal_bias="0.305"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.612" />
+        app:layout_constraintVertical_bias="0.586" />
 
     <TextView
         android:id="@+id/view3"
-        android:layout_width="155dp"
-        android:layout_height="55dp"
+        android:layout_width="192dp"
+        android:layout_height="47dp"
         android:text="@string/carNumWrite"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.05"
+        app:layout_constraintHorizontal_bias="0.047"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.835" />
+        app:layout_constraintVertical_bias="0.818" />
 
     <TextView
         android:id="@+id/view2"
-        android:layout_width="155dp"
-        android:layout_height="55dp"
+        android:layout_width="194dp"
+        android:layout_height="47dp"
         android:text="@string/carNumWrite"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -71,14 +71,14 @@
 
     <EditText
         android:id="@+id/carNumWrite2"
-        android:layout_width="96dp"
-        android:layout_height="41dp"
+        android:layout_width="72dp"
+        android:layout_height="44dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:maxLength="4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.533"
+        app:layout_constraintHorizontal_bias="0.604"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.818" />
@@ -90,10 +90,10 @@
         android:text="@string/sendCarNum2"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.889"
+        app:layout_constraintHorizontal_bias="0.949"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.823" />
+        app:layout_constraintVertical_bias="0.814" />
 
     <TextView
         android:id="@+id/menu2"
@@ -115,24 +115,24 @@
         android:text="@string/sendCarNum"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.889"
+        app:layout_constraintHorizontal_bias="0.949"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.462" />
+        app:layout_constraintVertical_bias="0.467" />
 
     <EditText
         android:id="@+id/carNumWrite1"
-        android:layout_width="96dp"
-        android:layout_height="42dp"
+        android:layout_width="72dp"
+        android:layout_height="44dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:maxLength="4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.533"
+        app:layout_constraintHorizontal_bias="0.604"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.46" />
+        app:layout_constraintVertical_bias="0.465" />
 
     <TextView
         android:id="@+id/menu1"
@@ -149,26 +149,26 @@
 
     <Button
         android:id="@+id/send"
-        android:layout_width="93dp"
-        android:layout_height="57dp"
+        android:layout_width="109dp"
+        android:layout_height="53dp"
         android:text="@string/send"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.889"
+        app:layout_constraintHorizontal_bias="0.949"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.112" />
+        app:layout_constraintVertical_bias="0.111" />
 
     <EditText
         android:id="@+id/ipWriteText"
-        android:layout_width="170dp"
-        android:layout_height="43dp"
+        android:layout_width="149dp"
+        android:layout_height="42dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:maxLength="16"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.377"
+        app:layout_constraintHorizontal_bias="0.385"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.123" />
@@ -188,13 +188,13 @@
 
     <TextView
         android:id="@+id/payInfo"
-        android:layout_width="357dp"
-        android:layout_height="80dp"
+        android:layout_width="316dp"
+        android:layout_height="69dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.351"
+        app:layout_constraintHorizontal_bias="0.305"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.975" />
+        app:layout_constraintVertical_bias="0.945" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
