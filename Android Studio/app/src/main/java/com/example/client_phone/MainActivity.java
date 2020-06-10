@@ -35,7 +35,7 @@ import static android.speech.tts.TextToSpeech.ERROR;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-
+    String info = "";
     private String host = "172.20.10.10";
     private int port = 9999;
     private Socket client_Socket;
@@ -91,9 +91,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         socketConnectButton.setOnClickListener(this);
         parkingCheckButton.setOnClickListener(this);
         payCheckButton.setOnClickListener(this);
-        carInfoList.add("1111A");
-        carInfoList.add("2222B");
-        carInfoList.add("3333C");
+
+        //add 하는 부분은 따로 스레드를 생성해서 라즈베리에서 오는 문자열을 계속 수신 -> ArrayList에 저장.
+//        carInfoList.add("2222B");
+//        carInfoList.add("3333C");
+
+        long now = System.currentTimeMillis();
+        Date mDate = new Date(now);
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
+        String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
+
+        info = "1111A" + getTime;
+        carInfoList.add(info);
 
         //tts-------------------
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -104,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         });
-
     }
 
     @Override
@@ -154,23 +162,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
                 }
-
                 if(carCheckFlag){
                     //TTS
-                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carInfoList.get(index).substring(4));
+                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carInfoList.get(index).substring(4,5));
                     if(carNum.substring(3).equals("2") || carNum.substring(3).equals("4") || carNum.substring(3).equals("5") || carNum.substring(3).equals("9"))
-                        tts.speak("차량번호 " + carNum + ". 는." + carInfoList.get(index).substring(4) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                        tts.speak("차량번호 " + carNum + ". 는." + carInfoList.get(index).substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
                     else
-                        tts.speak("차량번호 " + carNum + ". 은." + carInfoList.get(index).substring(4) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                        tts.speak("차량번호 " + carNum + ". 은." + carInfoList.get(index).substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
                 }
                 else{
                     //TTS
                     checkInfo.setText("조회되지 않는 차량입니다");
                     tts.speak("조회되지 않는 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
                 }
-
                 break;
-            case R.id.carNumWrite2:
+
+            case R.id.sendCarNum2:
+
+                boolean payCarCheckFlag = false;
+                int payIndex = 0;
+                String payCarNum = payCheckCarNum.getText().toString();
+
+                if(carInfoList != null){
+                    for(int i = 0 ; i < carInfoList.size(); i++){
+                        String storedCarNUm = carInfoList.get(i).substring(0,4);
+                        if(payCarNum.equals(storedCarNUm)){
+                            payCarCheckFlag = true;
+                            payIndex = i;
+                        }
+                    }
+                }
+
+                if(payCarCheckFlag){ //안에 있으면
+                    //TTS
+                    long now = System.currentTimeMillis();
+                    Date mDate = new Date(now);
+                    @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
+                    String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
+
+                    int diff = (Integer.parseInt(getTime) - Integer.parseInt(carInfoList.get(payIndex).substring(5))) * 10;
+                    payInfo.setText("차량번호 :" + payCarNum + "주차 요금 : " + diff);
+                    tts.speak("차량번호 " + payCarNum + "의 주차 요금은 " + diff +" 원 입니다.",TextToSpeech.QUEUE_FLUSH,null);
+                }
+                else{
+                    //TTS
+                    payInfo.setText("조회되지 않는 차량입니다");
+                    tts.speak("조회되지 않는 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                }
                 break;
         }
     }
@@ -196,7 +234,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
         }
         if(tts != null) {
-
             tts.stop();
             tts.shutdown();
         }
