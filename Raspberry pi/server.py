@@ -1,7 +1,7 @@
 import socket
 import time
 
-host = '192.168.123.39'
+host = '172.20.10.10'
 port = 9999 
  
 
@@ -14,16 +14,21 @@ client_sock, addr = server_sock.accept()
 print('Connected by', addr)
 
 try:
+
+    s = input()
+    client_sock.sendall(bytes(s + "\n",'UTF-8'))
+    print("send complete")
     
+    '''
     data = client_sock.recv(1024)
     print(data.decode("utf-8"), len(data))
 
 
     client_sock.sendall(bytes("나는 서버야\n",'UTF-8'))
     print("send complete")
-
-
-    client_sock.close()
-    server_sock.close()
+    '''
 except Exception as e:
     print(e)
+
+client_sock.close()
+server_sock.close()
