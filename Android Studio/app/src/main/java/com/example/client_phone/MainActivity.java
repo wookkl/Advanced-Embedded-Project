@@ -35,6 +35,7 @@ import static android.speech.tts.TextToSpeech.ERROR;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private static int parkedCarNum = 0;
     String info = "";
     private String host = "172.20.10.10";
     private int port = 9999;
@@ -96,13 +97,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        carInfoList.add("2222B");
 //        carInfoList.add("3333C");
 
-        long now = System.currentTimeMillis();
-        Date mDate = new Date(now);
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
-        String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
-
-        info = "1111A" + getTime;
-        carInfoList.add(info);
+//        long now = System.currentTimeMillis();
+//        Date mDate = new Date(now);
+//        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
+//        String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
+//
+//        info = "1111A" + getTime;
+//        carInfoList.add(info);
 
         //tts-------------------
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -140,15 +141,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.send:
                 String ip = ipWriteText.getText().toString();
                 connectInfo.setText(ip);
-//                long now = System.currentTimeMillis();
-//                Date mDate = new Date(now);
-//                @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("hh:mm:ss");
-//                String getTime = simpleDate.format(mDate);
-//                connectInfo.setText(getTime);
                 connect(ip);
                 break;
             case R.id.sendCarNum1:
-
                 boolean carCheckFlag = false;
                 int index = 0;
                 String carNum = parkingCheckCarNum.getText().toString();
@@ -178,7 +173,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.sendCarNum2:
-
                 boolean payCarCheckFlag = false;
                 int payIndex = 0;
                 String payCarNum = payCheckCarNum.getText().toString();
@@ -192,7 +186,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
                 }
-
                 if(payCarCheckFlag){ //안에 있으면
                     //TTS
                     long now = System.currentTimeMillis();
@@ -212,17 +205,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
     }
-//    @SuppressLint("HandlerLeak")
-//    Handler mainHandler = new Handler(){
-//        public void handleMessage(Message msg){
-//            switch(msg.what){
-//                case 1:
-//                    recvText.setText(msg.obj.toString());
-//                    System.out.println("Ssss");
-//                    break;
-//            }
-//        }
-//    };
+
+    @SuppressLint("HandlerLeak")
+    Handler mainHandler = new Handler(){
+        public void handleMessage(Message msg){
+            switch(msg.what){
+                case 1:
+                    connectInfo.setText(msg.obj.toString());
+                    break;
+            }
+        }
+    };
 
     public void onDestroy(){
         super.onDestroy();
@@ -242,6 +235,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     void connect(final String address){
         Thread checkUpdate = new Thread() {
             public void run() {
+                boolean registeredFlag = false;
+
                 String ip = address;
                 try {
                     client_Socket = new Socket(ip, port);
@@ -254,26 +249,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-//                try {
-//                    outputStream.println("안녕 난 클라이언트야");
-//
-//                    String recv = inputStream.readLine();
-//                    System.out.println(recv);
-//                    Message msg = Message.obtain(null, 1, recv);
-//                    mainHandler.sendMessage(msg);
-//                    client_Socket.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-
-                /*
                 while(true){
-                    서버에서 (4자리+주차자리)String 오면 split해 배열에 저장
-                    안오면 올때까지 대기, 요금정산이랑 주차확인은 어차피 버튼으로 send시킴.
+                    try {
+                        String recv = inputStream.readLine();
+                        if(recv != null){
+                            if(recv.equals("exit")){
+                                client_Socket.close();
+                                break;
+                            }else{  //번호 4자리 + 문자 1자리를 받았어
+                                if(carInfoList.size() != 0){
+                                    for(int i = 0; i < 3; i++){
+                                        if(recv.equals(carInfoList.get(i).substring(0,4))){
+                                            registeredFlag = true;
+                                        }
+                                    }
+                                }
 
+                                if(registeredFlag){ //등록 돼있는게 있으면 이미 등록된 차라고 말해줘야함.
+                                    tts.speak("이미 등록된 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                                }
+                                else{ //등록 안됨 -> 등록시켜줘야함
+                                    long now = System.currentTimeMillis();
+                                    Date mDate = new Date(now);
+                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
+                                    String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
+
+                                    info = recv + getTime;
+                                    carInfoList.add(info);
+
+                                    //차량 등록 확인 (view 에서)
+                                    Message msg = Message.obtain(null, 1, recv);
+                                    mainHandler.sendMessage(msg);
+                                }
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-                */
             }
         };
         checkUpdate.start();
