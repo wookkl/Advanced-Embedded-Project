@@ -14,10 +14,11 @@
 
 
 ## 오류 및 해결과정
-1. nfs오류 : Host pc에서 Achro로 Mount로 파일을 옮기고 LAN포트 뽑을 시 minicom 멈춤.
+
+- nfs오류 : Host pc에서 Achro로 Mount로 파일을 옮기고 LAN포트 뽑을 시 minicom 멈춤.
    - Ethernet을 down시키기 전에 umount를 해줘야 멈추지 않는다. 
-<br>
-2. Gateway 설정오류 : Server와 Client가 같은 네트워크에 있음에도 ping으로 패킷이 보내지지 않음.
+
+- Gateway 설정오류 : Server와 Client가 같은 네트워크에 있음에도 ping으로 패킷이 보내지지 않음.
    - Server와 Client를 Routing Table을 통해 같은 게이트웨이에 할당 시켜준다.
    - 외부 Network와 연결할 시 Default Gateway 설정 필요.
 
