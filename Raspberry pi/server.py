@@ -14,7 +14,6 @@ client_sock, addr = server_sock.accept()
 print('Connected by', addr)
 
 try:
-
     s = input()
     client_sock.sendall(bytes(s + "\n",'UTF-8'))
     print("send complete")
@@ -32,3 +31,4 @@ except Exception as e:
 
 client_sock.close()
 server_sock.close()
+
