@@ -1,30 +1,34 @@
 import socket
-import os
-def Main():
-    host='172.20.10.2'
-    port=8000 
-    s=socket.socket(socket.AF_INET,socket.SOCK_STREAM) #IPv4
-    f = open('download.png','rb')
-    size = os.path.getsize("download.png")
+import time
+
+host = '172.20.10.10'
+port = 9999 
+ 
+
+server_sock = socket.socket(socket.AF_INET)
+server_sock.bind((host, port))
+server_sock.listen(1)
+
+print("기다리는 중")
+client_sock, addr = server_sock.accept()
+print('Connected by', addr)
+
+try:
+    s = input()
+    client_sock.sendall(bytes(s + "\n",'UTF-8'))
+    print("send complete")
     
-    s.bind((host,port)) 
-    s.listen(5)
-    conn,addr=s.accept()
-    conn.send("Hello Server!!".encode('ascii'))
     '''
-    conn.send(str(size).encode('ascii'))
-    l= f.read(1024)
-    
-    print("Sending...")
-    while l:
-        print("Sending...")
-        #s.send(l)
-        l= f.read(1024)
-    print('Done Sending')
-    conn.send("Thank you for connection")
-    f.close()
+    data = client_sock.recv(1024)
+    print(data.decode("utf-8"), len(data))
+
+
+    client_sock.sendall(bytes("나는 서버야\n",'UTF-8'))
+    print("send complete")
     '''
-    conn.close()
-    s.close()
-if __name__=='__main__':
-	Main()
+except Exception as e:
+    print(e)
+
+client_sock.close()
+server_sock.close()
+
