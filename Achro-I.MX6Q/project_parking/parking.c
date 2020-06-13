@@ -1,29 +1,12 @@
-#include<stdio.h>
-#include<string.h>
-#include<sys/socket.h>
-#include<arpa/inet.h>   
-#include<sys/ioctl.h>
-#include<unistd.h>  
-#include<iostream>
-#include<fstream>
-#include<errno.h>
-#include<pthread.h>
-
-#define BUFF_SIZE 1024              //def buffsize
-#define SERV_IP "172.20.10.2"  
-#define SERV_PORT 8000
+#include "/root/work/achroimx6q/parking/parking.h"
 void* t_recv_from_server();
-
-
 int main(int argc, char **argv) {
 	struct sockaddr_in clientaddr;
-	int client_sockfd;
-	int client_len;
+	int client_sockfd,client_len;
 	int rcv_byte;
-	int msg[BUFF_SIZE];
+	char msg[BUFF_SIZE];
 	int pthread_t p_thread;
-	int thread_id;
-	int status;
+	int thread_id,status;
 	if ((client_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {  // create server socket
 		perror("error : ");
 		return 1;
@@ -42,17 +25,22 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	else printf("Client_connect() is OK...\n\n");
+	while(1){
+		scanf("%s",msg);
+		send(client_sockfd,msg,strlen(msg)+1,0);
+	}
 
+	/*
 	thread_id = pthread_create(&p_thread, NULL, t_recv_from_server);
 	rcv_byte = recv(client_sockfd, msg, sizeof(msg), 0);
 	printf("%s",msg);
-
 	pthread_cancel(p_thread);
 	pthread_join(p_thread, (void**)&status) ;
+	*/
 	close(client_sockfd);
 	return 0;
 }
-
+/*
 void* t_recv_from_server(){
 	int rcv_byte;
 	while(1)
@@ -66,3 +54,4 @@ void* t_recv_from_server(){
 		}
 	}
 }
+*/
