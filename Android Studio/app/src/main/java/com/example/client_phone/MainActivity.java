@@ -140,15 +140,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch(v.getId()){
             case R.id.send:
                 String ip = ipWriteText.getText().toString();
-                connectInfo.setText(ip);
-                connect(ip);
+                //connect(ip);
+                connect("172.20.10.2");
                 break;
             case R.id.sendCarNum1:
                 boolean carCheckFlag = false;
                 int index = 0;
                 String carNum = parkingCheckCarNum.getText().toString();
 
-                if(carInfoList != null){
+                if(carInfoList != null){            //차량번호 앞에 공백문자 들어와서 제거 해줘야함.
+                    connectInfo.setText(carInfoList.get(0).substring(0,4));
+                    connectInfo.append("  " + carInfoList.get(0).length());
                     for(int i = 0 ; i < carInfoList.size(); i++){
                         String storedCarNUm = carInfoList.get(i).substring(0,4);
                         if(carNum.equals(storedCarNUm)){
@@ -212,6 +214,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             switch(msg.what){
                 case 1:
                     connectInfo.setText(msg.obj.toString());
+                    checkInfo.setText(carInfoList.get(0));
                     break;
             }
         }
@@ -249,10 +252,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                while(true){
+                while(true){    //receive
                     try {
                         String recv = inputStream.readLine();
                         if(recv != null){
+                            recv = recv.substring(1);
                             if(recv.equals("exit")){
                                 client_Socket.close();
                                 break;
@@ -264,7 +268,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         }
                                     }
                                 }
-
                                 if(registeredFlag){ //등록 돼있는게 있으면 이미 등록된 차라고 말해줘야함.
                                     tts.speak("이미 등록된 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
                                 }
@@ -278,7 +281,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     carInfoList.add(info);
 
                                     //차량 등록 확인 (view 에서)
-                                    Message msg = Message.obtain(null, 1, recv);
+                                    Message msg = Message.obtain(null, 1, info);
                                     mainHandler.sendMessage(msg);
                                 }
                             }
