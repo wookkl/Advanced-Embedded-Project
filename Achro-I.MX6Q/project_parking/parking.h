@@ -35,3 +35,10 @@
 #define BUFF_SIZE 1024             
 #define SERV_IP "172.20.10.3"  
 #define SERV_PORT 9999
+#define CAR_NUMBER  5
+#define TRUE 1
+#define FALSE 0
+typedef struct strct_parking_user{
+	char area;
+	char car_number[CAR_NUMBER];
+}Parking_user;
