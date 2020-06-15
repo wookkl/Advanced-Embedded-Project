@@ -11,9 +11,6 @@ print("complete")
 
 try:
     while True:
-        #data = client_socket.recv(1024)
-        #print(data.decode("utf-8"), len(data))
-
         s = input()
         client_socket.sendall(bytes(s, 'UTF-8'))
 except Exception as e:
