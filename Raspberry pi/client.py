@@ -1,6 +1,6 @@
 import socket
 
-host = '172.20.10.3'
+host = '192.168.0.185'
 port = 9999
 
 
@@ -13,7 +13,7 @@ try:
     while True:
 
         s = input()
-        client_socket.sendall(bytes(s, 'UTF-8'))
+        client_socket.sendall(bytes(s +"\n", 'UTF-8'))
 except Exception as e:
     print(e)
 

@@ -141,68 +141,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.send:
                 String ip = ipWriteText.getText().toString();
                 //connect(ip);
-                connect("172.20.10.2");
+                //connect("172.20.10.2");
+                connect("192.168.0.185");
                 break;
             case R.id.sendCarNum1:
-                boolean carCheckFlag = false;
-                int index = 0;
                 String carNum = parkingCheckCarNum.getText().toString();
+                String carNumCheck = isExist(carNum);
 
-                if(carInfoList != null){            //차량번호 앞에 공백문자 들어와서 제거 해줘야함.
-                    connectInfo.setText(carInfoList.get(0).substring(0,4));
-                    connectInfo.append("  " + carInfoList.get(0).length());
-                    for(int i = 0 ; i < carInfoList.size(); i++){
-                        String storedCarNUm = carInfoList.get(i).substring(0,4);
-                        if(carNum.equals(storedCarNUm)){
-                            carCheckFlag = true;
-                            index = i;
-                        }
-                    }
-                }
-                if(carCheckFlag){
-                    //TTS
-                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carInfoList.get(index).substring(4,5));
-                    if(carNum.substring(3).equals("2") || carNum.substring(3).equals("4") || carNum.substring(3).equals("5") || carNum.substring(3).equals("9"))
-                        tts.speak("차량번호 " + carNum + ". 는." + carInfoList.get(index).substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
-                    else
-                        tts.speak("차량번호 " + carNum + ". 은." + carInfoList.get(index).substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                if(carNumCheck.equals("조회되지 않는 차량입니다")){
+                    checkInfo.setText(carNumCheck);
+                    tts.speak(carNumCheck,TextToSpeech.QUEUE_FLUSH,null);
                 }
                 else{
-                    //TTS
-                    checkInfo.setText("조회되지 않는 차량입니다");
-                    tts.speak("조회되지 않는 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carNumCheck.substring(4,5));
+                    if(carNum.substring(3).equals("2") || carNum.substring(3).equals("4") || carNum.substring(3).equals("5") || carNum.substring(3).equals("9"))
+                        tts.speak("차량번호 " + carNum + ". 는." + carNumCheck.substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                    else
+                        tts.speak("차량번호 " + carNum + ". 은." + carNumCheck.substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
                 }
                 break;
 
             case R.id.sendCarNum2:
-                boolean payCarCheckFlag = false;
-                int payIndex = 0;
                 String payCarNum = payCheckCarNum.getText().toString();
+                String check = isExist(payCheckCarNum.getText().toString());
 
-                if(carInfoList != null){
-                    for(int i = 0 ; i < carInfoList.size(); i++){
-                        String storedCarNUm = carInfoList.get(i).substring(0,4);
-                        if(payCarNum.equals(storedCarNUm)){
-                            payCarCheckFlag = true;
-                            payIndex = i;
-                        }
-                    }
-                }
-                if(payCarCheckFlag){ //안에 있으면
-                    //TTS
-                    long now = System.currentTimeMillis();
-                    Date mDate = new Date(now);
-                    @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
-                    String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
-
-                    int diff = (Integer.parseInt(getTime) - Integer.parseInt(carInfoList.get(payIndex).substring(5))) * 10;
-                    payInfo.setText("차량번호 :" + payCarNum + "주차 요금 : " + diff);
-                    tts.speak("차량번호 " + payCarNum + "의 주차 요금은 " + diff +" 원 입니다.",TextToSpeech.QUEUE_FLUSH,null);
+                if(check.equals("조회되지 않는 차량입니다")){
+                    payInfo.setText(check);
+                    tts.speak(check,TextToSpeech.QUEUE_FLUSH,null);
                 }
                 else{
-                    //TTS
-                    payInfo.setText("조회되지 않는 차량입니다");
-                    tts.speak("조회되지 않는 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                    check = check.substring(5);
+                    int diff = pay(check);
+                    payInfo.setText("차량번호 :" + payCarNum + "주차 요금 : " + diff);
+                    tts.speak("차량번호 " + payCarNum + "의 주차 요금은 " + diff +" 원 입니다.",TextToSpeech.QUEUE_FLUSH,null);
                 }
                 break;
         }
@@ -214,11 +185,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             switch(msg.what){
                 case 1:
                     connectInfo.setText(msg.obj.toString());
-                    checkInfo.setText(carInfoList.get(0));
                     break;
             }
         }
     };
+
+    public int pay(String lastTime){
+        String currentTime = getTime();
+        int currentSecond = Integer.parseInt(currentTime.substring(0,2)) * 60 + Integer.parseInt(currentTime.substring(2));
+        int lastSecond = Integer.parseInt(lastTime.substring(0,2)) * 60 +  Integer.parseInt(lastTime.substring(2));
+
+        return (currentSecond - lastSecond) * 10;
+    }
+
+    public String isExist(String text){
+        boolean flag = false;
+        int index = 0;
+        String str = "";
+        if(carInfoList != null){
+            for(int i = 0 ; i < carInfoList.size(); i++){
+                String storedCarNUm = carInfoList.get(i).substring(0,4);
+                if(text.equals(storedCarNUm)){
+                    flag = true;
+                    index = i;
+                    break;
+                }
+            }
+            if(flag){
+                str = carInfoList.get(index);   //9자리 전부보냄
+            }
+            else{
+                str = "조회되지 않는 차량입니다";
+            }
+        }
+        return str;
+    }
 
     public void onDestroy(){
         super.onDestroy();
@@ -252,47 +253,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                while(true){    //receive
-                    try {
-                        String recv = inputStream.readLine();
-                        if(recv != null){
-                            recv = recv.substring(1);
-                            if(recv.equals("exit")){
-                                client_Socket.close();
-                                break;
-                            }else{  //번호 4자리 + 문자 1자리를 받았어
-                                if(carInfoList.size() != 0){
-                                    for(int i = 0; i < 3; i++){
-                                        if(recv.equals(carInfoList.get(i).substring(0,4))){
-                                            registeredFlag = true;
-                                        }
-                                    }
-                                }
-                                if(registeredFlag){ //등록 돼있는게 있으면 이미 등록된 차라고 말해줘야함.
-                                    tts.speak("이미 등록된 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
-                                }
-                                else{ //등록 안됨 -> 등록시켜줘야함
-                                    long now = System.currentTimeMillis();
-                                    Date mDate = new Date(now);
-                                    @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
-                                    String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
-
-                                    info = recv + getTime;
-                                    carInfoList.add(info);
-
-                                    //차량 등록 확인 (view 에서)
-                                    Message msg = Message.obtain(null, 1, info);
-                                    mainHandler.sendMessage(msg);
-                                }
-                            }
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                receive();
             }
         };
         checkUpdate.start();
     }
 
+
+    void receive(){
+        while(true){
+            try {
+                String recv = inputStream.readLine();
+                if(recv != null){
+                    System.out.println(recv);
+                    if(recv.equals("exit")){
+                        client_Socket.close();
+                        break;
+                    }else{
+                        String check = isExist(recv.substring(0,4));
+
+                        if(check.equals("조회되지 않는 차량입니다")){
+                            info = recv + getTime();
+                            carInfoList.add(info);
+
+                            Message msg = Message.obtain(null, 1, info);
+                            mainHandler.sendMessage(msg);
+                        }
+                        else{
+                            tts.speak("이미 등록된 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public String getTime(){
+        long now = System.currentTimeMillis();
+        Date mDate = new Date(now);
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
+        return simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
+    }
+
+
 }
+
