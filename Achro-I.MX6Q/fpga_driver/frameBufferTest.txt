@@ -1,0 +1,274 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <linux/fb.h>
+int makepixel(int  r, int g, int b);
+void drawLineHor(int height, int start_x, int length_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
+void drawLineVer(int width, int start_y, int length_y, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
+void drawRect(int x1, int y1, int x2, int y2, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
+void clearDisplay(int* pfbdata, struct fb_var_screeninfo fvs);
+void drawUpDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
+void drawDownDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
+
+
+int makepixel(int  r, int g, int b)
+{
+    return (int)((r<<16)|(g<<8)|b);
+}
+
+void drawArrow(int x1, int y1, int end_x, int end_y_up, int end_y_down , int* pfbdata, struct fb_var_screeninfo fvs){
+	
+	int pixel = makepixel(255,255,255);	
+	int offset = y1 * fvs.xres + x1;
+	int i, j, k = y1;	
+	int startPoint = x1;
+	int len = (end_x - x1)/3;
+
+	for(i = y1, j = y1; i <= y1 + len; i++, j--){
+		for(k = y1; k <= i; k++){
+			offset = k * fvs.xres + startPoint;
+			*(pfbdata + offset) = pixel;
+		}
+		for(k = y1; k >= j; k--){
+			offset = k * fvs.xres + startPoint;
+			*(pfbdata + offset) = pixel;		
+		}
+		startPoint += 1;	
+	}
+	printf("%d : %d : %d : %d",startPoint, end_y_up, end_x, end_y_down);
+	drawRect(startPoint,y1 - ((startPoint - x1)/2),end_x,y1 + ((startPoint - x1)/2),makepixel(255,255,255),pfbdata,fvs);
+	
+}
+
+void dot(int x, int y, int* pfbdata, struct fb_var_screeninfo fvs){
+	int offset;
+	int pixel = makepixel(0,0,0);
+	offset = y * fvs.xres + x;
+	*(pfbdata + offset) = pixel;
+}
+
+static void ploat_circle(int x_center, int y_center, int x_coor, int y_coor,int* pfbdata, struct fb_var_screeninfo fvs){
+	dot( x_center +x_coor, y_center +y_coor,pfbdata,fvs);
+	dot( x_center -x_coor, y_center +y_coor,pfbdata,fvs);
+	dot( x_center +x_coor, y_center -y_coor,pfbdata,fvs);
+   	dot( x_center -x_coor, y_center -y_coor,pfbdata,fvs);
+   	dot( x_center +y_coor, y_center +x_coor,pfbdata,fvs);
+   	dot( x_center -y_coor, y_center +x_coor,pfbdata,fvs);
+   	dot( x_center +y_coor, y_center -x_coor,pfbdata,fvs);
+   	dot( x_center -y_coor, y_center -x_coor,pfbdata,fvs);	
+} 
+
+void  circle( int x_center, int y_center, int radius,int* pfbdata, struct fb_var_screeninfo fvs)
+{
+   int      x_coor;
+   int      y_coor;
+   int      p_value;
+
+   x_coor   = 0;
+   y_coor   = radius;
+   p_value   = 3 - 2 * radius;
+   while   ( x_coor < y_coor)
+   {
+      ploat_circle( x_center, y_center, x_coor, y_coor,pfbdata,fvs);
+      if ( p_value < 0)
+      {
+         p_value   += 4 * x_coor +6;
+      }
+      else
+      {
+         p_value   += 4 * ( x_coor -y_coor) +10;
+         y_coor--;
+      }
+      x_coor++;
+   }
+   if ( x_coor == y_coor)
+      ploat_circle( x_center, y_center, x_coor, y_coor,pfbdata,fvs);
+}
+
+void drawLineHor(int height, int start_x, int length_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs){
+	int horOffset = height * fvs.xres;
+	int i = 0;
+	for(i = start_x; i < start_x + length_x; i++){
+		*(pfbdata + horOffset + i) = pixel;	
+	}
+}
+
+void drawLineVer(int width, int start_y, int length_y, int pixel, int* pfbdata, struct fb_var_screeninfo fvs){
+	int verOffset = width;
+	int i = 0;
+	for(i = start_y; i < start_y + length_y; i++){
+		*(pfbdata + verOffset + (i * fvs.xres)) = pixel;	
+	}
+}
+
+void drawRect(int x1, int y1, int x2, int y2, int pixel, int* pfbdata, struct fb_var_screeninfo fvs){
+	int i = 0, j = 0, rectOffset;	
+	for(i = y1; i <= y2; i++) {
+ 		rectOffset = i * fvs.xres;
+	 	for(j = x1;j <= x2; j++)
+ 			*(pfbdata + rectOffset + j) = pixel;
+ 	}
+}
+
+//car size(width : 106, height : 150)
+void drawCar(int x1, int y1, int pixel, int* pfbdata,struct fb_var_screeninfo fvs){
+	int i, j, offset;
+	int wheel_pixel = makepixel(192,192,192);
+	int wheel_Line_Pixel = makepixel(0,0,0);
+
+	for(i = y1; i <= y1 + 150; i++){
+		offset = i * fvs.xres;
+		for(j = x1; j <= x1 + 106; j++)
+			*(pfbdata + offset + j) = pixel;	
+	}
+	
+	for(i = y1 + 20; i <= y1 + 50 ; i++){
+		offset = i * fvs.xres;
+		for(j = x1 - 20; j <= x1; j++){
+			if(j == (x1 - 10)){
+				*(pfbdata + offset + j) = wheel_Line_Pixel;
+			}
+			else
+				*(pfbdata + offset + j) = wheel_pixel;
+		}	
+	}
+
+	for(i = y1 + 20; i <= y1 + 50; i++){
+		offset = i * fvs.xres;
+		for(j = x1 + 106; j <= x1 + 126; j++){
+			if(j == (x1 + 116))
+				*(pfbdata + offset + j) = wheel_Line_Pixel;
+			else			
+				*(pfbdata + offset +j) = wheel_pixel;		
+		}	
+	}
+
+	for(i = y1 + 100; i <= y1 + 130; i++){
+		offset = i * fvs.xres;
+		for(j = x1 - 20; j <= x1; j++){
+			if(j == (x1 - 10))
+				*(pfbdata + offset + j) = wheel_Line_Pixel;
+			else
+				*(pfbdata + offset + j) = wheel_pixel;	
+		}
+	}
+	
+	for(i = y1 + 100; i <= y1 + 130; i++){
+		offset = i * fvs.xres;
+		for(j = x1 + 106; j <= x1 + 126; j++){
+			if(j == (x1 + 116))
+				*(pfbdata + offset + j) = wheel_Line_Pixel;
+			else
+				*(pfbdata + offset + j) = wheel_pixel;	
+		}
+	}
+} 
+
+void clearDisplay(int* pfbdata, struct fb_var_screeninfo fvs){
+	int i = 0, j = 0, rectOffset;	
+	for(i = 0; i < 600; i++) {
+ 		rectOffset = i * fvs.xres;
+	 	for(j = 0;j < 1024; j++)
+ 			*(pfbdata + rectOffset + j) = makepixel(0,0,0);
+ 	}
+}
+void drawUpDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs){
+	int i, upDiagonalOffset;
+	for(i = x1; i <= end_x; i++){
+		upDiagonalOffset = y1 * fvs.xres + x1;
+		*(pfbdata + upDiagonalOffset + i) = pixel;
+		y1 += 1;	
+	} 
+}
+void drawDownDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs){
+	int i, downDiagonalOffset;
+	for(i = x1; i <= end_x; i++){
+		downDiagonalOffset = y1 * fvs.xres + x1;
+		*(pfbdata + downDiagonalOffset + i) = pixel;
+		y1 -= 1;	
+	} 
+}
+
+void drawMainScreen(int* pfbdata, struct fb_var_screeninfo fvs){
+	//clear
+	clearDisplay(pfbdata,fvs);
+	//side	
+	drawRect(0,0,1023,10,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(0,0,10,599,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(0,590,1023,599,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(1013,0,1023,599,makepixel(255,255,255),pfbdata,fvs);
+	//parking area - up
+	drawRect(0,229,659,239,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(649,0,659,239,makepixel(255,255,255),pfbdata,fvs);	
+	drawRect(215,0,225,239,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(431,0,441,239,makepixel(255,255,255),pfbdata,fvs);
+	//parking area - down
+	drawRect(0,349,658,359,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(648,349,658,599,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(215,349,225,599,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(431,349,441,599,makepixel(255,255,255),pfbdata,fvs);
+	//enterLine
+	drawRect(824,0,829,239,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(824,359,829,599,makepixel(255,255,255),pfbdata,fvs);
+	//payButton
+	drawRect(824,499,1023,504,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(829,504,1013,589,makepixel(255,255,0),pfbdata,fvs);
+	drawRect(849,524,993,569,makepixel(0,255,0),pfbdata,fvs);
+	circle(921,547,20,pfbdata,fvs);	
+	//Line
+	drawRect(40,289,80,294,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(180,289,220,294,makepixel(255,255,255),pfbdata,fvs);	
+	drawRect(320,289,360,294,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(460,289,500,294,makepixel(255,255,255),pfbdata,fvs);
+	drawRect(600,289,640,294,makepixel(255,255,255),pfbdata,fvs);
+	//car
+	drawCar(59,49,makepixel(0,255,0),pfbdata,fvs);	  //A
+	drawCar(277,49,makepixel(0,255,0),pfbdata,fvs);   //C
+	drawCar(494,49,makepixel(0,255,0),pfbdata,fvs);   //E
+	drawCar(59,399,makepixel(0,255,0),pfbdata,fvs);   //B
+	drawCar(277,399,makepixel(0,255,0),pfbdata,fvs);  //D
+	drawCar(494,399,makepixel(0,255,0),pfbdata,fvs);  //F
+	//Arrow
+	drawArrow(750,300,850,320,280,pfbdata,fvs);
+}
+
+int main(void)
+{
+	int check,frame_fd;
+	int pixel;
+	int offset, posx1, posy1, posx2, posy2;
+	int repx, repy;
+	int* pfbdata;
+	struct fb_var_screeninfo fvs;
+
+	if((frame_fd = open("/dev/fb0",O_RDWR))<0)
+	{
+ 		perror("Frame Buffer Open Error!");
+ 		exit(1);
+ 	}
+ 	if((check=ioctl(frame_fd,FBIOGET_VSCREENINFO,&fvs))<0)
+	{
+ 		perror("Get Information Error - VSCREENINFO!");
+ 		exit(1);
+ 	}	
+	
+	pfbdata = (int *) mmap(0, fvs.xres*fvs.yres*4, PROT_READ| \
+ 	PROT_WRITE, MAP_SHARED, frame_fd, 0);               
+	
+
+ 	if((unsigned)pfbdata == (unsigned)-1) 
+	{
+ 		perror("Error Mapping!\n");
+ 	}
+	//mainScreen
+	drawMainScreen(pfbdata,fvs);
+
+ 	munmap(pfbdata,fvs.xres*fvs.yres*4); // 맵핑된 메모리 해제
+ 	close(frame_fd);
+ 	return 0;
+	
+}
