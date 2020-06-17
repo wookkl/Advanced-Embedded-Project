@@ -1,14 +1,20 @@
-insmod ../fpga_driver/lcd/fpga_text_lcd_driver.ko
-mknod /dev/fpga_text_lcd c 263 0
+insmod ./ko/fpga_text_lcd_driver.ko
+mknod /dev/lcd c 263 0
 
-insmod ../fpga_driver/fnd/fpga_fnd_driver.ko
-mknod /dev/fpga_fnd c 261 0
+insmod ./ko/fpga_fnd_driver.ko
+mknod /dev/fnd c 261 0
 
-insmod ../fpga_driver/hc_sr04/fpga_hc_sr04_driver.ko
-mknod /dev/fpga_hc_sr04 c 244 0
+insmod ./ko/fpga_hc-sr04_driver.ko
+mknod /dev/us c 246 0
 
-insmod ../fpga_driver/push_button/fpga_push_switch_driver.ko
-mknod /dev/push_switch 265 
+insmod ./ko/fpga_push_switch_driver.ko
+mknod /dev/push_switch c 265 0
 
-make
-./parking
+insmod ./ko/fpga_buzzer_driver.ko
+mknod /dev/buzzer c 264 0 
+
+insmod ./ko/fpga_dot_driver.ko
+mknod /dev/dot c 262 0 
+
+insmod ./ko/fpga_led_driver.ko
+mknod /dev/led c 260 0 
