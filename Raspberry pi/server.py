@@ -6,7 +6,7 @@ import numpy as np
 import pytesseract
 from PIL import Image
 
-host = '172.20.10.2'
+host = '192.168.0.185'
 port = 9999
 cap = cv2.VideoCapture(0)
 
@@ -16,19 +16,21 @@ server_socket.bind((host,port))
 server_socket.listen(2)
 
 def sendMsgToAchro(client_socket,message):
-    print("sendToAchro")
-    client_socket.sendall(bytes(message,'UTF-8'))
+    print("sendToAchro :",message)
+    client_socket.sendall(bytes(message+"\n",'UTF-8'))
 
 def sendMsgToAndroid(client_socket,message):
-    print(message)
+    print("sendToAndroid :", message)
     client_socket.sendall(bytes(message+"\n",'UTF-8'))
 
 def startCam():
     print("Cam Start")
     while True:
         ret,frame = cap.read()
-        cv2.imshow('test',frame)
-        
+        dst = cv2.resize(frame,(400,300))
+        cv2.imshow('test',dst)
+        cv2.moveWindow('test',400,70)
+
         key = cv2.waitKey(1)
         if key == 27:
             break
@@ -51,7 +53,7 @@ def receive(x):
         msg = data.decode("utf-8")
         if msg == "exit":
             print("exit")
-            break;
+            break
         elif msg == "start":
             print("screenShot!!!")
             ret, frame = cap.read()
@@ -59,9 +61,16 @@ def receive(x):
             #car = cv2.imread('testimg3.jpg',cv2.IMREAD_COLOR)
             car = cv2.imread('carNumber' + str(i) + '.jpg',cv2.IMREAD_COLOR)
             n = imageProcessing(car)
-            n += str(chr(i + 64))
-            i += 1
-            sendMsgToAndroid(android_socket, n)
+            if len(n) == 4:
+                try:
+                    print(int(n))
+                    n += str(chr(i + 64))
+                    i += 1
+                    sendMsgToAndroid(android_socket, n)
+                except:
+                    print("ImageProcessing Error...Retry Capture!!!!")
+            else:
+                print("ImageProcessing Error...Retry Capture!!!")
         else:
             print(msg,len(msg))
     android_socket.close()
@@ -126,8 +135,8 @@ def imageProcessing(frame):
     er_invplate = er_plate
     cv2.imwrite('er_plate.jpg',er_invplate)
     result = pytesseract.image_to_string(Image.open('er_plate.jpg'))
-    print(result.replace(" ",""))
-    return result[4:]
+    print("result : ", result,"  len : ",len(result))
+    return result
 
 def connect():
     isConnectedPhone = False
@@ -137,11 +146,11 @@ def connect():
     while True:
         print("wait...")
         client_socket, addr = server_socket.accept()
-        if addr[0] == '172.20.10.5':
+        if addr[0] == '192.168.0.106':
             print("--------Achro connect--------")
             clientInfo[0] = (client_socket, addr)
             isConnectedAchro = True
-        elif addr[0] == '172.20.10.4':
+        elif addr[0] == '192.168.0.160':
             print("--------Android connect--------")
             clientInfo[1] = (client_socket, addr)
             isConnectedPhone = True
