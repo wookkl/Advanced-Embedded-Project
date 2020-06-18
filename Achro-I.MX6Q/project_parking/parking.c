@@ -9,6 +9,8 @@ void charge_button(void);
 void parking(char,char*);
 void led_on(int);
 void led_off(int);
+void lcd_clear();
+
 
 /***************************************************
 	This is functions that draw screen.
@@ -21,14 +23,19 @@ void clearDisplay(int* pfbdata, struct fb_var_screeninfo fvs);
 void drawUpDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
 void drawDownDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct fb_var_screeninfo fvs);
 void drawMainScreen(int* pfbdata, struct fb_var_screeninfo fvs);
-void drawCar(int x1, int y1, int pixel, int* pfbdata,struct fb_var_screeninfo fvs);
+void drawCar(int x1, int y1, int* pfbdata,struct fb_var_screeninfo fvs, int flag);
 void  circle( int x_center, int y_center, int radius,int* pfbdata, struct fb_var_screeninfo fvs);
 static void ploat_circle(int x_center, int y_center, int x_coor, int y_coor,int* pfbdata, struct fb_var_screeninfo fvs);
 void dot(int x, int y, int* pfbdata, struct fb_var_screeninfo fvs);
+void drawRect2(int x1, int y1, int x2, int y2, int pixel);
+void car(int i, int flag);
 
 
 int client_sockfd,client_len;
-
+//-----
+int* pfbdata;
+struct fb_var_screeninfo fvs;
+//------
 int dev_button,dev_fnd,dev_dot,dev_led;
 int available;
 int count_car;
@@ -48,10 +55,8 @@ int main(int argc, char **argv) {
 	int check,frame_fd;
 	int pixel;
 	int offset, posx1, posy1, posx2, posy2;
-	int repx, repy;
-	int* pfbdata;
-	struct fb_var_screeninfo fvs;
-
+	int repx, repy;	
+	//----------------------------------------------------------------------
 	if ((client_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {  // create server socket
 		perror("error : ");
 		return 1;
@@ -70,14 +75,12 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 	else printf("Client_connect() is OK...\n\n");
-	
 	memset(&user,0,sizeof(user));
-
+	
 	dev_button=open("/dev/push_switch",O_RDONLY);
 	dev_fnd=open("/dev/fnd",O_RDWR);
 	dev_dot=open("/dev/dot",O_WRONLY);
 	dev_led=open("/dev/led",O_RDWR);
-
 	if((frame_fd = open("/dev/fb0",O_RDWR))<0)
 	{
  		perror("Frame Buffer Open Error!");
@@ -97,11 +100,10 @@ int main(int argc, char **argv) {
 	{
  		perror("Error Mapping!\n");
  	}
-
-	clearDisplay(pfbdata,fvs);
+	
+	write(dev_dot,fpga_number[count_car],sizeof(fpga_number[count_car]));
+	write(dev_led, &led,1);
 	drawMainScreen(pfbdata,fvs);
-	circle(921,547,20,pfbdata,fvs);
-
 
 	thread_id[0] = pthread_create(&p_thread[0], NULL, t_ultrasonic,NULL);
 	thread_id[1] = pthread_create(&p_thread[1], NULL, t_recv_from_server,NULL);
@@ -138,8 +140,9 @@ void* t_ultrasonic(){
 	{
 		read(dev_us,us_buff,2);
 		dist=us_buff[0];
-		printf("distance: %d\n",dist);	
+	
 		if(dist>=20 && dist<=25){
+			printf("distance: %d\n",dist);
 			if(available>=AREA_NUM){
 				//lcd_print *not available*
 				print_lcd("SORRY","NOT AVAILABLE");
@@ -167,17 +170,25 @@ void* t_ultrasonic(){
 void* t_recv_from_server(){
 	char msg[BUFF_SIZE];
 	char keyword;
-	char value[BUFF_SIZE];
+	unsigned char value[16]="";
 	int rcv_byte,i;
 	while(1){
 		rcv_byte=recv(client_sockfd, msg, sizeof(msg), 0);
+		for(i = 0; i < strlen(msg); i++){
+			printf("%c",msg[i]);		
+		}
+		printf("\n");
+
 		keyword=msg[0];
 		for(i=1;i<strlen(msg);i++){
 			value[i-1]=msg[i];
 		}
+		printf("value: %s\n",value);
+		value[i]='\0';
 		switch(keyword){
 			case	'$':
 				print_lcd("PARKING FEE",value);
+				lcd_clear();
 			default:
 				parking(keyword,value);
 		}
@@ -219,42 +230,46 @@ void* t_touch_screen(){
 void charge_button(){
 	unsigned char push_sw_buf[IOM_PUSH_SWITCH_MAX_BUTTON];
 	unsigned char fnd_data[4];
+	unsigned char send_data[5]="";
 	int push_cnt=0;
 	int flag=FALSE;
 	int i;
 	memset(fnd_data,0,sizeof(fnd_data));
 	while(push_cnt<4){
-		usleep(200000);
 		read(dev_button,&push_sw_buf,sizeof(push_sw_buf));
 		for(i=0; i< IOM_PUSH_SWITCH_MAX_BUTTON;i++){
 			if(push_sw_buf[i]){
+				usleep(400000);
 				fnd_data[push_cnt]=i+1;
-				write(dev_fnd,fnd_data,FND_MAX_DIGIT);
+				send_data[push_cnt]='1'+i;
 				push_cnt++;
-				while(push_sw_buf[i])
-					read(dev_button,&push_sw_buf,sizeof(push_sw_buf));
+				write(dev_fnd,fnd_data,FND_MAX_DIGIT);
 			}
 		}
 	}
 	sleep(1);
-	memset(fnd_data,0,sizeof(fnd_data));
-	write(dev_fnd,fnd_data,FND_MAX_DIGIT);
+	send_data[4]='\0';
 	for(i=0;i<AREA_NUM;i++){
-		if(strcmp(fnd_data,user[i].car_number)){
+		if(!strcmp(send_data,user[i].car_number)){
 			memset(&user[i],0,sizeof(user[i]));
 			flag=TRUE;
 			count_car--;
 			led_off(i);
+			car(i,FALSE);
 			write(dev_dot,fpga_number[count_car],sizeof(fpga_number[count_car]));
 		}
 	}
 	if(!flag){
 		//lcd print not exist car number
 		print_lcd("SORRY.","not exist car");
+		lcd_clear();
 	}
 	else{
-		send(client_sockfd,fnd_data,strlen(fnd_data),0);
+		send(client_sockfd,send_data,strlen(send_data)+1,0);
+
 	}
+	memset(fnd_data,0,sizeof(fnd_data));
+	write(dev_fnd,fnd_data,FND_MAX_DIGIT);
 }
 
 void print_lcd(char* str1, char* str2) {
@@ -264,7 +279,6 @@ void print_lcd(char* str1, char* str2) {
 	len1 = strlen(str1);
 	len2 = strlen(str2);
 	dev = open(TEXT_LCD_DEVICE, O_WRONLY);
-	printf("%d",dev);
 	memset(buf, ' ', TEXT_LCD_MAX_BUF);
 	write(dev, buf, TEXT_LCD_MAX_BUF);
 	memcpy(buf, str1, len1);
@@ -274,12 +288,20 @@ void print_lcd(char* str1, char* str2) {
 
 	close(dev);
 }
+void lcd_clear(){
+	sleep(3);
+	print_lcd("                    ","                    ");
+}
+
 void parking(char area,char* num){
 	int n=area-'A';
+	int i;
+
 	user[n].area=area;
-	strcat(user[n].car_number,num);
+	strcpy(user[n].car_number,num);
 	count_car++;
 	led_on(n);
+	car(n, TRUE);
 	write(dev_dot,fpga_number[count_car],sizeof(fpga_number[count_car]));
 }
 void led_on(int  num){
@@ -331,11 +353,6 @@ void led_off(int num){
 	}
 	write(dev_led, &led,1);
 }
-
-
-
-
-
 
 int makepixel(int  r, int g, int b)
 {
@@ -431,11 +448,24 @@ void drawRect(int x1, int y1, int x2, int y2, int pixel, int* pfbdata, struct fb
  	}
 }
 
+void drawRect2(int x1, int y1, int x2, int y2, int pixel){
+	int i = 0, j = 0, rectOffset;	
+	for(i = y1; i <= y2; i++) {
+ 		rectOffset = i * fvs.xres;
+	 	for(j = x1;j <= x2; j++)
+ 			*(pfbdata + rectOffset + j) = pixel;
+ 	}
+}
+
 //car size(width : 106, height : 150)
-void drawCar(int x1, int y1, int pixel, int* pfbdata,struct fb_var_screeninfo fvs){
-	int i, j, offset;
+void drawCar(int x1, int y1, int* pfbdata,struct fb_var_screeninfo fvs, int flag){
+	int i, j, offset,pixel;
 	int wheel_pixel = makepixel(192,192,192);
 	int wheel_Line_Pixel = makepixel(0,0,0);
+	if(flag == TRUE)
+		pixel = makepixel(255,0,0);
+	else
+		pixel = makepixel(0,255,0);
 
 	for(i = y1; i <= y1 + 150; i++){
 		offset = i * fvs.xres;
@@ -511,6 +541,8 @@ void drawDownDiagonal(int x1, int y1, int end_x, int pixel, int* pfbdata, struct
 }
 
 void drawMainScreen(int* pfbdata, struct fb_var_screeninfo fvs){
+	int i;
+	clearDisplay(pfbdata,fvs);
 	//side	
 	drawRect(0,0,1023,10,makepixel(255,255,255),pfbdata,fvs);
 	drawRect(0,0,10,599,makepixel(255,255,255),pfbdata,fvs);
@@ -539,11 +571,38 @@ void drawMainScreen(int* pfbdata, struct fb_var_screeninfo fvs){
 	drawRect(320,289,360,294,makepixel(255,255,255),pfbdata,fvs);
 	drawRect(460,289,500,294,makepixel(255,255,255),pfbdata,fvs);
 	drawRect(600,289,640,294,makepixel(255,255,255),pfbdata,fvs);
+	circle(921,547,20,pfbdata,fvs);
 	//car
-	drawCar(59,49,makepixel(0,255,0),pfbdata,fvs);	  //A
-	drawCar(277,49,makepixel(0,255,0),pfbdata,fvs);   //C
-	drawCar(494,49,makepixel(0,255,0),pfbdata,fvs);   //E
-	drawCar(59,399,makepixel(0,255,0),pfbdata,fvs);   //B
-	drawCar(277,399,makepixel(0,255,0),pfbdata,fvs);  //D
-	drawCar(494,399,makepixel(0,255,0),pfbdata,fvs);  //F
+
+	for(i = 0 ; i < 6; i++)
+		car(i,FALSE);
+
+
 }
+
+void car(int i, int flag){\
+	switch(i){
+		case 0:
+			drawCar(59,49,pfbdata,fvs,flag);
+			break;
+		case 1:
+			drawCar(59,399,pfbdata,fvs,flag);
+			
+			break;
+		case 2:
+			drawCar(277,49,pfbdata,fvs,flag);
+			break;
+		case 3:
+			drawCar(277,399,pfbdata,fvs,flag);
+			break;
+		case 4:
+			drawCar(494,49,pfbdata,fvs,flag);
+			break;
+		case 5:
+			drawCar(494,399,pfbdata,fvs,flag);
+			break;
+		default:
+			break;
+	}
+}
+
