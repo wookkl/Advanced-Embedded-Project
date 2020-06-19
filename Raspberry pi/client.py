@@ -9,11 +9,27 @@ client_socket.connect((host, port))
 
 print("complete")
 
-try:
-    while True:
-        s = input()
-        client_socket.sendall(bytes(s +"\n", 'UTF-8'))
-except Exception as e:
-    print(e)
+while True:    
+    s = input()
+    client_socket.sendall(bytes(s + "\n", 'UTF-8'))
+    msg = client_socket.recv(1024)
+    if len(msg) >= 1:
+        break
+
+
+msg = msg.decode('utf-8')
+print("car num :" ,msg)
+
+
+
+
+msg = client_socket.recv(1024)
+msg = msg.decode('utf-8')
+print("charge by phone : ",msg)
+
+
+
+
 
 #client_socket.close()
+#192.168.0.106

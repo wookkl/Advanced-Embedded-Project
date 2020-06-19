@@ -2,26 +2,22 @@ package com.example.client_phone;
 
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.NetworkOnMainThreadException;
 import android.speech.tts.TextToSpeech;
-import android.text.InputType;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -62,6 +58,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button socketConnectButton;
     Button parkingCheckButton;
     Button payCheckButton;
+    Button chargeButton;
+
+    Intent intent;
 
     ArrayList<String> carInfoList = new ArrayList<String>();
 
@@ -88,10 +87,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         socketConnectButton = (Button)findViewById(R.id.send);
         parkingCheckButton = (Button)findViewById(R.id.sendCarNum1);
         payCheckButton = (Button)findViewById(R.id.sendCarNum2);
+        chargeButton = (Button) findViewById(R.id.chargeButton);
 
         socketConnectButton.setOnClickListener(this);
         parkingCheckButton.setOnClickListener(this);
         payCheckButton.setOnClickListener(this);
+        chargeButton.setOnClickListener(this);
+
+        intent = new Intent(this, ParkingAreaActivity.class);
 
         //tts-------------------
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -114,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item){
         switch(item.getItemId()){
             case R.id.action_btn1:
+                startActivity(intent);
             case R.id.action_btn2:
             case R.id.action_btn3:
                 return true;
@@ -121,52 +125,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return super.onOptionsItemSelected(item);
         }
     }
-
-    @SuppressLint("SetTextI18n")
-    @Override
-    public void onClick(View v) {
-        switch(v.getId()){
-            case R.id.send:
-                String ip = ipWriteText.getText().toString();
-                //connect(ip);
-                connect("172.20.10.2");
-                //connect("192.168.0.185");
-                break;
-            case R.id.sendCarNum1:
-                String carNum = parkingCheckCarNum.getText().toString();
-                String carNumCheck = isExist(carNum);
-
-                if(carNumCheck.equals("조회되지 않는 차량입니다")){
-                    checkInfo.setText(carNumCheck);
-                    tts.speak(carNumCheck,TextToSpeech.QUEUE_FLUSH,null);
-                }
-                else{
-                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carNumCheck.substring(4,5));
-                    if(carNum.substring(3).equals("2") || carNum.substring(3).equals("4") || carNum.substring(3).equals("5") || carNum.substring(3).equals("9"))
-                        tts.speak("차량번호 " + carNum + ". 는." + carNumCheck.substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
-                    else
-                        tts.speak("차량번호 " + carNum + ". 은." + carNumCheck.substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
-                }
-                break;
-
-            case R.id.sendCarNum2:
-                String payCarNum = payCheckCarNum.getText().toString();
-                String check = isExist(payCheckCarNum.getText().toString());
-
-                if(check.equals("조회되지 않는 차량입니다")){
-                    payInfo.setText(check);
-                    tts.speak(check,TextToSpeech.QUEUE_FLUSH,null);
-                }
-                else{
-                    check = check.substring(5);
-                    int diff = pay(check);
-                    payInfo.setText("차량번호 :" + payCarNum + "주차 요금 : " + diff);
-                    tts.speak("차량번호 " + payCarNum + "의 주차 요금은 " + diff +" 원 입니다.",TextToSpeech.QUEUE_FLUSH,null);
-                }
-                break;
-        }
-    }
-
     @SuppressLint("HandlerLeak")
     Handler mainHandler = new Handler(){
         public void handleMessage(Message msg){
@@ -177,6 +135,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     };
+    public void Charge(String Num){
+        String chargeCheck = isExist(Num);
+        Message msg = new Message();
+        msg.what = 1;
+
+        if(chargeCheck.equals("조회되지 않는 차량입니다")){
+            msg.obj = chargeCheck;
+            mainHandler.sendMessage(msg);
+            tts.speak(chargeCheck,TextToSpeech.QUEUE_FLUSH,null);
+        }
+        else {  //9자리 받아옴
+            String fee = String.valueOf(pay(chargeCheck.substring(5))); //돈 가져옴
+            outputStream.println("$" + Num + fee);      //돈 보냄
+            System.out.println("num : " + Num + "fee : " + fee);
+            carInfoList.remove(chargeCheck);            //List에 차 번호,구역,등록시간 삭제
+            String region = chargeCheck.substring(4,5); //9자리중 구역 추출
+            intent.putExtra("parking",region);    //구역 ParkingActivity로 보냄
+
+            tts.speak("정산이 완료되었습니다.",TextToSpeech.QUEUE_FLUSH,null);
+            msg.obj = region;
+            mainHandler.sendMessage(msg);
+        }
+    }
 
     public int pay(String lastTime){
         String currentTime = getTime();
@@ -278,12 +259,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                         else if(recv.length() == 4)
                         {
-                            String fee = isExist(recv); //저장된 9자리 불러옴
-                            fee = String.valueOf(pay(fee.substring(5))); //요금 string으로 반환 , fee : 요금
-                            System.out.println("요금 : " + fee);
-
-                            outputStream.println("$" + recv + fee);
-                            System.out.println("$" + recv + fee);
+                            Charge(recv);
                         }
 
                     }
@@ -300,6 +276,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
     }
 
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onClick(View v) {
+        switch(v.getId()){
+            case R.id.send:
+                String ip = ipWriteText.getText().toString();
+                //connect(ip);
+                //connect("172.20.10.2");
+                connect("192.168.0.185");
+                break;
+            case R.id.sendCarNum1:
+                String carNum = parkingCheckCarNum.getText().toString();
+                String carNumCheck = isExist(carNum);
+
+                if(carNumCheck.equals("조회되지 않는 차량입니다")){
+                    checkInfo.setText(carNumCheck);
+                    tts.speak(carNumCheck,TextToSpeech.QUEUE_FLUSH,null);
+                }
+                else{
+                    checkInfo.setText("차량번호 : " + carNum + ", 주차 구역 : " + carNumCheck.substring(4,5));
+                    if(carNum.substring(3).equals("2") || carNum.substring(3).equals("4") || carNum.substring(3).equals("5") || carNum.substring(3).equals("9"))
+                        tts.speak("차량번호 " + carNum + ". 는." + carNumCheck.substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                    else
+                        tts.speak("차량번호 " + carNum + ". 은." + carNumCheck.substring(4,5) + "구역에 있습니다",TextToSpeech.QUEUE_FLUSH,null);
+                }
+                break;
+
+            case R.id.sendCarNum2:
+                String payCarNum = payCheckCarNum.getText().toString();
+                String check = isExist(payCheckCarNum.getText().toString());
+
+                if(check.equals("조회되지 않는 차량입니다")){
+                    payInfo.setText(check);
+                    tts.speak(check,TextToSpeech.QUEUE_FLUSH,null);
+                }
+                else{
+                    check = check.substring(5);
+                    int diff = pay(check);
+                    payInfo.setText("차량번호 :" + payCarNum + "주차 요금 : " + diff);
+                    tts.speak("차량번호 " + payCarNum + "의 주차 요금은 " + diff +" 원 입니다.",TextToSpeech.QUEUE_FLUSH,null);
+                }
+                break;
+            case R.id.chargeButton:
+                String chargeNum = payCheckCarNum.getText().toString();
+                Charge(chargeNum);
+        }
+    }
 
 }
 
