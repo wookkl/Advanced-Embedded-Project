@@ -6,22 +6,29 @@ import numpy as np
 import pytesseract
 from PIL import Image
 
-host = '192.168.0.185'
+host = '172.20.10.3'
 port = 9999
 cap = cv2.VideoCapture(0)
+global isParked
+isParked = [ ["",0],["",0],["",0],["",0],["",0],["",0] ]
 
+#***********************************Create Socket************************************
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind((host,port))
 server_socket.listen(2)
+#***************************************************************************************
+
 
 def sendMsgToAchro(client_socket,message):
     print("sendToAchro :",message)
-    client_socket.sendall(bytes(message+"\n",'UTF-8'))
+    client_socket.sendall(bytes(message,'UTF-8'))
+
 
 def sendMsgToAndroid(client_socket,message):
     print("sendToAndroid :", message)
     client_socket.sendall(bytes(message+"\n",'UTF-8'))
+
 
 def startCam():
     print("Cam Start")
@@ -37,49 +44,63 @@ def startCam():
     cap.release()
     cv2.destroyAllWindows()
 
-def receive(x):
-    print("Receive Start")
-    i = 1
-    print(x[0][1][0]) #Achro -> addr -> ip
-    print(x[1][1][0]) #Phone -> addr -> ip
-    
+
+def Receive_Achro(x):
+    print("Achro Receive Start")
     achro_socket = x[0][0]
     android_socket = x[1][0]
-    
     while True:
+        index = 0
         data = achro_socket.recv(1024)
-        data = data[:len(data)-1]
-
-        msg = data.decode("utf-8")
+        msg = data[:len(data)-1].decode("utf-8")   #delete NULL
+        print("From Achro data : ", msg, "len : ",len(msg))
         if msg == "exit":
-            print("exit")
+            print("Achro exit...")
             break
         elif msg == "start":
-            print("screenShot!!!")
-            ret, frame = cap.read()
-            cv2.imwrite('carNumber' + str(i) + '.jpg',frame)
-            #car = cv2.imread('testimg3.jpg',cv2.IMREAD_COLOR)
-            car = cv2.imread('carNumber' + str(i) + '.jpg',cv2.IMREAD_COLOR)
-            n = imageProcessing(car)
-            if len(n) == 4:
-                try:
-                    print(int(n))
-                    n += str(chr(i + 64))
-                    i += 1
-                    sendMsgToAndroid(android_socket, n)
-                except:
-                    print("ImageProcessing Error...Retry Capture!!!!")
-            else:
-                print("ImageProcessing Error...Retry Capture!!!")
+            for ex in range(len(isParked)):     #find none Parked index
+                if isParked[ex][1] == 0:
+                    index = ex
+                    print("register : ",isParked)
+                    break
+            imageProcessing(achro_socket,android_socket,index)
         else:
-            print(msg,len(msg))
-    android_socket.close()
+            sendMsgToAndroid(android_socket, msg)
     achro_socket.close()
 
 
-def imageProcessing(frame):
-    copy_img = frame.copy()
-    img2 = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+def Receive_Android(y):
+    print("Android Receive Start")
+    achro_socket = y[0][0]
+    android_socket = y[1][0]
+    
+    while True:
+        data = android_socket.recv(1024)
+        msg = data[:len(data)-1].decode("utf-8")
+        print("From Android data : ", msg, "len : ",len(msg))
+
+        if msg == "exit":
+            print("Android exit...")
+            break
+        else:
+            for ex in range(len(isParked)):
+                if isParked[ex][0] == msg[1:5]:
+                    isParked[ex][0] = ""
+                    isParked[ex][1] = 0
+                    print("delete : ",isParked)
+                    break
+            print("parked_del :",isParked)
+            sendMsgToAchro(achro_socket,msg)
+    android_socket.close()
+
+def imageProcessing(achro_socket,android_socket,carNum):
+    print("screenShot!!!")
+    ret, frame = cap.read()
+    cv2.imwrite('carNumber' + str(carNum + 1) + '.jpg',frame)    #need?
+    car = cv2.imread('carNumber' + str(carNum + 1) + '.jpg',cv2.IMREAD_COLOR) #need?
+    
+    copy_img = car.copy()
+    img2 = cv2.cvtColor(car, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(img2,(3,3),0)
     canny = cv2.Canny(blur,100,200)
     cnts, contours, hierarchy = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -133,10 +154,27 @@ def imageProcessing(frame):
     kernel = np.ones((3,3),np.uint8)
     er_plate = cv2.erode(th_plate,kernel,iterations = 1)
     er_invplate = er_plate
-    cv2.imwrite('er_plate.jpg',er_invplate)
-    result = pytesseract.image_to_string(Image.open('er_plate.jpg'))
-    print("result : ", result,"  len : ",len(result))
-    return result
+    result = pytesseract.image_to_string(er_invplate)
+    flag = 0
+    if len(result) == 4:
+        try:
+            print(int(result))
+            print("parked : ",isParked)
+            for i in range(len(isParked)):
+                if isParked[i][0] == result:
+                    flag = 1
+                    print("exist")
+                    break
+            if flag == 0:
+                isParked[carNum] = [result,1]     #register
+                result += str(chr(carNum + 65))
+                sendMsgToAndroid(android_socket, result) #1234A
+                result = result[4:] + result[:4]
+                sendMsgToAchro(achro_socket,result) #A1234
+        except:
+            print("ImageProcessing Error...Retry Capture__Except!!!!")
+    else:
+        print("ImageProcessing Error...Retry Capture__Len!!!!")
 
 def connect():
     isConnectedPhone = False
@@ -146,11 +184,11 @@ def connect():
     while True:
         print("wait...")
         client_socket, addr = server_socket.accept()
-        if addr[0] == '192.168.0.106':
+        if addr[0] == '172.20.10.5':
             print("--------Achro connect--------")
             clientInfo[0] = (client_socket, addr)
             isConnectedAchro = True
-        elif addr[0] == '192.168.0.160':
+        elif addr[0] == '172.20.10.2':
             print("--------Android connect--------")
             clientInfo[1] = (client_socket, addr)
             isConnectedPhone = True
@@ -162,11 +200,17 @@ def connect():
     print("----------------------Start camThread and recvThread-----------------------")
     camThread = threading.Thread(target = startCam)
     camThread.start()
-    recvThread = threading.Thread(target = receive, args =[clientInfo])
-    recvThread.start()
-    
+    #Achro Receiver Start
+    recvFromAchroThread = threading.Thread(target = Receive_Achro, args =[clientInfo])
+    recvFromAchroThread.start()
+    #Android Receiver Start
+    recvFromAndroidThread = threading.Thread(target = Receive_Android, args =[clientInfo])
+    recvFromAndroidThread.start()
     
 if __name__ == "__main__":
     connect()
 
+
+
+    
 
