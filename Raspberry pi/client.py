@@ -1,3 +1,4 @@
+#Pyhton <--> Java [Server Client 소켓통신 TestCode]
 import socket
 
 host = '192.168.0.185'
