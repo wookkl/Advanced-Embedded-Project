@@ -15,4 +15,6 @@
     <string name="menu3">💰요금 조회</string>
     <string name="carNumWrite2">😛4자리 입력 : </string>
     <string name="sendCarNum2">요금 조회</string>
+
+    <string name="chargeButton">정산</string>
 </resources>
