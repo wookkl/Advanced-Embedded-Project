@@ -16,7 +16,7 @@ char* Read_switch();
 int Is_exist_car(char*);
 
 /****************************************************
-*		This is functions that draw screen.			*
+		This is functions that draw screen.			
 ****************************************************/
 int Makepixel(int  r, int g, int b);
 void DrawLineHor(int height, int start_x, int length_x, int pixel);
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
 	signal(SIGINT,(void*) Signal_handler);
 
 	/************************************************************
-	*					Connect to SERVER						*
+						Connect to SERVER						
 	************************************************************/
 	if ((client_sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 		perror("error : ");
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
 	else printf("Client_connect() is OK...\n\n");
 	memset(&user,0,sizeof(user));
 	/************************************************************
-	*					Open device driver						*
+						Open device driver						
 	************************************************************/
 	dev_lcd = open(TEXT_LCD_DEVICE, O_WRONLY);
 	dev_button=open("/dev/push_switch",O_RDONLY);
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
 	DrawMainScreen();
 	Print_lcd("HELLO~!","KPU PARKING ZONE");
 	/************************************************************
-	*				Create threads & start threads				*
+					Create threads & start threads				
 	************************************************************/
 	thread_id[0] = pthread_create(&p_thread[0], NULL, t_ultrasonic,NULL);
 	thread_id[1] = pthread_create(&p_thread[1], NULL, t_recv_from_server,NULL);
@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
 	
 	ClearDisplay();
 	/************************************************************
-	*						Cancel threads						*
+							Cancel threads						
 	************************************************************/
 	pthread_cancel(p_thread[0]);
 	pthread_cancel(p_thread[1]);
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
 	pthread_join(p_thread[2], (void**)&status);
 
 	/************************************************************
-	*			Close devices and release memory map			*
+				Close devices and release memory map			
 	************************************************************/
 	Print_lcd("                ","               ");
 	for(i=0;i<6;i++)
@@ -171,12 +171,12 @@ int main(int argc, char **argv) {
 }
 
 /****************************************************
-*		This is function that handles sinnal.		*
+		This is function that handles sinnal.		
 ****************************************************/
 void Signal_handler(int signo){
 	int i;
 	/************************************************************
-	*						Cancel threads						*
+							Cancel threads						
 	************************************************************/
 	pthread_cancel(p_thread[0]);
 	pthread_cancel(p_thread[1]);
@@ -186,7 +186,7 @@ void Signal_handler(int signo){
 	pthread_join(p_thread[2], (void**)&status);
 
 	/************************************************************
-	*			Close devices and release memory map			*
+				Close devices and release memory map			
 	************************************************************/
 	Print_lcd("                ","               ");
 	for(i=0;i<6;i++)
@@ -206,7 +206,7 @@ void Signal_handler(int signo){
 	exit(1);
 }
 /****************************************************
-*	This is thread that handles ultrasonic value.	*
+	This is thread that handles ultrasonic value.	
 ****************************************************/
 void* t_ultrasonic(){
 	char us_buff[2];
@@ -238,7 +238,7 @@ void* t_ultrasonic(){
 }
 
 /****************************************************
-*	This is thread recieves data from server.		*
+	This is thread recieves data from server.		
 ****************************************************/
 void* t_recv_from_server(){
 	char msg[BUFF_SIZE];
@@ -253,8 +253,7 @@ void* t_recv_from_server(){
 			value[i-1]=msg[i];
 		}
 		value[i]='\0';
-	
-		printf("keyword: %c \n value : %s\n",keyword,value);
+
 		switch(keyword){
 			case	'$':
 				Charge(value);
@@ -268,7 +267,7 @@ void* t_recv_from_server(){
 }
 
 /****************************************************
-*	This is a thread that handles screen events.	*
+	This is a thread that handles screen events.	
 ****************************************************/
 void* t_touch_screen(){
 	int screen_fd, ret;
@@ -297,6 +296,7 @@ void* t_touch_screen(){
 				Exit_button();
 				
 			}	
+			/*		Touch the exit Icon		*/
 			else if((659<=x && x<=833) && ( 504<=y && y<=589 )){
            		printf("x = %d, y = %d \n",x,y);
 				PushPayButton();
@@ -325,7 +325,7 @@ void Charge(char* info){
 			fee[i-4]=info[i];
 		
 	}
-	car_number[4]='\0';	//$2343000
+	car_number[4]='\0';	
 	area=Is_exist_car(car_number);
 	if(area==-1){
 		Print_lcd("SORRY.","not exist car");
@@ -413,7 +413,6 @@ void Print_lcd(char* str1, char* str2) {
 	int i;
 	len1 = strlen(str1);
 	len2 = strlen(str2);
-	printf("str1 = %s\nstr2= %s\n",str1,str2);
 	memset(buf, ' ', TEXT_LCD_MAX_BUF);
 	write(dev_lcd, buf, TEXT_LCD_MAX_BUF);
 	memcpy(buf, str1, len1);
