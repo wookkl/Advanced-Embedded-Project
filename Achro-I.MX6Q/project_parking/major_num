@@ -1,6 +1,0 @@
-led = 260
-fnd = 261
-dot = 262
-lcd = 263
-buzzer = 264
-push_switch 265

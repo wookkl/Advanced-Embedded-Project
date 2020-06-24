@@ -1,3 +1,4 @@
+./set
 insmod ./ko/fpga_text_lcd_driver.ko
 mknod /dev/lcd c 263 0
 
@@ -18,3 +19,6 @@ mknod /dev/dot c 262 0
 
 insmod ./ko/fpga_led_driver.ko
 mknod /dev/led c 260 0 
+
+insmod ./ko/fpga_step_motor_driver.ko
+mknod /dev/motor c 267 0 

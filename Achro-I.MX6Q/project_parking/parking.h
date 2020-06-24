@@ -38,11 +38,25 @@
 #define PUSH_SWITCH_DEVICE		"/dev/push_switch"
 #define IOM_PUSH_SWITCH_MAX_BUTTON	9
 
+#define STEP_MOTOR_DEVICE	"/dev/motor"
+#define STEP_MOTOR_ON		0
+#define STEP_MOTOR_OFF		1
+#define STEP_MOTOR_DIR_LEFT	0
+#define STEP_MOTOR_DIR_RIGHT	1
+#define STEP_MOTOR_SPDVAL_MIN	0	// min value, fastest
+#define STEP_MOTOR_SPDVAL_MAX	255	// max vlaue, slowes
+
+
+
+
+
 #define BUFF_SIZE 1024             
 #define SERV_PORT 9999
-#define CAR_NUMBER  5
+#define CAR_NUMBER  6
 #define TRUE 1
 #define FALSE 0
+#define ON 1
+#define OFF 0
 #define DEV_SCREEN_PATH "/dev/input/by-path/platform-imx-i2c.2-event"
 #define AREA_NUM 6
 typedef struct strct_parking_user{

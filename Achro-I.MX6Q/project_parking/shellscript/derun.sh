@@ -14,7 +14,10 @@ rmmod ./ko/fpga_buzzer_driver.ko
 rm /dev/buzzer 
 
 rmmod ./ko/fpga_dot_driver.ko
-rm /dev/do
+rm /dev/dot
 
 rmmod ./ko/fpga_led_driver.ko
 rm /dev/led
+
+rmmod ./ko/fpga_step_motor_driver.ko
+rm /dev/motor
