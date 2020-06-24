@@ -93,18 +93,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         parkingCheckButton.setOnClickListener(this);
         payCheckButton.setOnClickListener(this);
 
-        //add 하는 부분은 따로 스레드를 생성해서 라즈베리에서 오는 문자열을 계속 수신 -> ArrayList에 저장.
-//        carInfoList.add("2222B");
-//        carInfoList.add("3333C");
-
-//        long now = System.currentTimeMillis();
-//        Date mDate = new Date(now);
-//        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDate = new SimpleDateFormat("mm:ss");
-//        String getTime = simpleDate.format(mDate).substring(0,2) + simpleDate.format(mDate).substring(3);
-//
-//        info = "1111A" + getTime;
-//        carInfoList.add(info);
-
         //tts-------------------
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
             @Override
@@ -141,8 +129,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.send:
                 String ip = ipWriteText.getText().toString();
                 //connect(ip);
-                //connect("172.20.10.2");
-                connect("192.168.0.185");
+                connect("172.20.10.2");
+                //connect("192.168.0.185");
                 break;
             case R.id.sendCarNum1:
                 String carNum = parkingCheckCarNum.getText().toString();
@@ -270,18 +258,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         client_Socket.close();
                         break;
                     }else{
-                        String check = isExist(recv.substring(0,4));
+                        System.out.println(recv);
+                        Message m = Message.obtain(null,1,recv);
+                        mainHandler.sendMessage(m);
 
-                        if(check.equals("조회되지 않는 차량입니다")){
-                            info = recv + getTime();
-                            carInfoList.add(info);
+                        if(recv.length() == 5){
+                            String check = isExist(recv.substring(0,4));
 
-                            Message msg = Message.obtain(null, 1, info);
-                            mainHandler.sendMessage(msg);
+                            if(check.equals("조회되지 않는 차량입니다")){
+                                info = recv + getTime();
+                                carInfoList.add(info);
+
+                                Message msg = Message.obtain(null, 1, info);
+                                mainHandler.sendMessage(msg);
+                            }
+                            else{
+                                tts.speak("이미 등록된 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                            }
                         }
-                        else{
-                            tts.speak("이미 등록된 차량입니다",TextToSpeech.QUEUE_FLUSH,null);
+                        else if(recv.length() == 4)
+                        {
+                            String fee = isExist(recv); //저장된 9자리 불러옴
+                            fee = String.valueOf(pay(fee.substring(5))); //요금 string으로 반환 , fee : 요금
+                            System.out.println("요금 : " + fee);
+
+                            outputStream.println("$" + recv + fee);
+                            System.out.println("$" + recv + fee);
                         }
+
                     }
                 }
             } catch (IOException e) {
