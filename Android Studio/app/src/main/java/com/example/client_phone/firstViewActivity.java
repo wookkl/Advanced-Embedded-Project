@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.content.Intent;
-import android.view.WindowManager;
+
 
 
 public class firstViewActivity extends AppCompatActivity {
@@ -21,7 +21,6 @@ public class firstViewActivity extends AppCompatActivity {
         assert actionBar != null;
         actionBar.setTitle("석상우, 이정욱");
 
-//        actionBar.hide();
 
         Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
