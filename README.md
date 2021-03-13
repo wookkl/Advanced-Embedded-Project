@@ -1,4 +1,4 @@
-# 장애인 주차 관리 시스템 (이정욱, 석상우)
+# 주차 관리 시스템 (이정욱, 석상우)
 ## 개발 환경: Crosscompile, NFS
 ### HOST PC
 * Ubuntu 12.04 LTS
